@@ -22,7 +22,7 @@
 
 | 项目 | 结果 | 证据 / 限制 |
 | --- | --- | --- |
-| pytest | PASS | **28 passed, 1 warning**；包含 PowerShell 脚本测试，没有 skip；工程包独立解压后复验同样通过 |
+| pytest | PASS | **29 passed, 1 warning**；包含 PowerShell 脚本测试，没有 skip；工程包独立解压后复验同样通过 |
 | Ruff 检查与格式 | PASS | `All checks passed`；14 files formatted |
 | Compose 配置 | PASS | `docker compose config --quiet` |
 | 回环端口、只读配置、n8n 卷 | PASS | 解析 Compose 实际展开配置并断言，未打印密钥 |
@@ -41,7 +41,7 @@
 | n8n 数据持久化 | NOT VERIFIED | 已配置卷，但没有 n8n 工作流/数据库运行验证 |
 | Windows + Docker Desktop 全流程 | NOT VERIFIED | 当前是 Linux 云环境，无法代替目标本机验收 |
 
-ZIP 已通过 CRC 校验、文件排除检查及实际密钥值扫描；独立解压到新目录后运行全部 28 项测试再次通过，记录见 `evidence/package-pytest.txt`。
+ZIP 已通过 CRC 校验、文件排除检查及实际密钥值扫描；独立解压到新目录后运行全部 29 项测试再次通过，记录见 `evidence/package-pytest.txt`。
 
 pytest 有一条上游 Starlette/TestClient 关于 httpx 的弃用提示，测试未失败。未因该提示更换本阶段 HTTP 客户端。
 
@@ -117,11 +117,21 @@ P0 不需要更换镜像版本或编造凭据以绕过该环境限制。请在�
 
 新增 `scripts/start_p0.ps1`，按阶段检查 Docker 引擎、Linux containers、Compose 配置，按需创建 `.env`，拉取固定 n8n 镜像并等待服务健康，最后执行完整冒烟检查。默认等待 300 秒，可通过 `-WaitTimeout 600` 延长。脚本不会覆盖已有 `.env`，不会删除卷，不会自动修改 Docker 存储驱动。
 
-冒烟检查增加真实 n8n 容器内部到 `http://api:8000/ready` 的连接验证；该检查将在实际 n8n 容器运行后执行。新增 5 个脚本流程测试，覆盖 Docker 引擎不可用、Windows 容器模式、镜像拉取失败、内部连接失败和成功路径。测试中的 Docker 与 HTTP 返回采用模拟，不代表 n8n 在本次云环境启动成功。
+冒烟检查增加真实 n8n 容器内部到 `http://api:8000/ready` 的连接验证；该检查将在实际 n8n 容器运行后执行。新增 6 个脚本流程测试，覆盖 Docker 引擎不可用、Windows 容器模式、镜像拉取失败、API 镜像构建失败、内部连接失败和成功路径。测试中的 Docker 与 HTTP 返回采用模拟，不代表 n8n 在本次云环境启动成功。
 
-当前完整单测为 **28 passed, 1 warning**，没有 skip。n8n 的云端资源阻断仍未解除，Windows 实际启动与持久化验收仍待完成。排障说明见 `N8N_TROUBLESHOOTING.md`。
+当前完整单测为 **29 passed, 1 warning**，没有 skip。n8n 的云端资源阻断仍未解除，Windows 实际启动与持久化验收仍待完成。排障说明见 `N8N_TROUBLESHOOTING.md`。
 
 指定的聊天附件输出目录位于当前环境的只读根文件系统下。目录写入授权已申请并获准，但创建目录仍返回 `Read-only file system`。工程 ZIP 和报告已经完成并通过排除密钥检查，另准备仅包含交付文件的私有下载页作为交付方式。该页面不运行 API 或 n8n；项目部署模式保持本地运行。
+
+## Docker 构建前端网络超时修复
+
+Windows 本机反馈 n8n 镜像已拉取成功，但构建 API 时，Dockerfile 的 `# syntax=docker/dockerfile:1` 触发额外前端镜像下载，在 `auth.docker.io/token` 连接超时。已删除该指令，使用当前 Docker Desktop / BuildKit 内置的 Dockerfile 前端，保留可选 CA secret 与 TLS 验证。
+
+云端实际执行 `docker build --secret id=proxy_ca,src=/etc/ssl/certs/ca-certificates.crt -t radar-api:frontend-fix .` 成功，日志直接从 Python 基础镜像解析进入构建，不再下载 `docker/dockerfile:1`。实测构建摘要见 `evidence/docker-frontend-fix-build.txt`。
+
+一键启动脚本现在先单独构建 API，再启动容器并等待健康；构建失败会标记 `API image build`，避免将镜像下载失败误报成服务不健康。新增构建失败立即停止的流程测试，完整测试为 29 passed、1 条上游弃用提示。
+
+Python 基础镜像、pip 依赖以及 n8n 镜像依然需要网络。此修复消除一个不必要的拉取步骤，不代表 Docker Hub 的所有网络问题已解决。Windows 本机仍需重跑启动与冒烟检查。
 
 ## Windows 剩余验收
 
