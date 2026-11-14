@@ -1,0 +1,213 @@
+{
+  "name": "AI Frontier Radar - P1 News Ingestion",
+  "active": false,
+  "nodes": [
+    {
+      "id": "Manual-collection",
+      "name": "Manual collection",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "Every-15-minutes",
+      "name": "Every 15 minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        200
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "Collect-public-feeds",
+      "name": "Collect public feeds",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        260,
+        80
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://api:8000/api/v1/ingestion/run",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{}",
+        "options": {
+          "timeout": 300000
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "Collection-has-results",
+      "name": "Collection has results",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        520,
+        80
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "run-status",
+              "leftValue": "={{ [\"completed\", \"partial\"].includes($json.status) }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "Human-review-inbox",
+      "name": "Human review inbox",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        780,
+        0
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "inbox",
+              "name": "inbox_url",
+              "type": "string",
+              "value": "http://localhost:8000/radar"
+            },
+            {
+              "id": "review",
+              "name": "next_step",
+              "type": "string",
+              "value": "人工阅读原文并核查；飞书同步在收件箱中手动执行。"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      }
+    },
+    {
+      "id": "Collection-needs-attention",
+      "name": "Collection needs attention",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        780,
+        210
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "inbox",
+              "name": "inbox_url",
+              "type": "string",
+              "value": "http://localhost:8000/radar"
+            },
+            {
+              "id": "attention",
+              "name": "next_step",
+              "type": "string",
+              "value": "查看来源错误和最近采集记录；不得将失败视为采集成功。"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Manual collection": {
+      "main": [
+        [
+          {
+            "node": "Collect public feeds",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Every 15 minutes": {
+      "main": [
+        [
+          {
+            "node": "Collect public feeds",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect public feeds": {
+      "main": [
+        [
+          {
+            "node": "Collection has results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collection has results": {
+      "main": [
+        [
+          {
+            "node": "Human review inbox",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Collection needs attention",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Shanghai",
+    "executionTimeout": 600
+  },
+  "pinData": {},
+  "tags": []
+}
