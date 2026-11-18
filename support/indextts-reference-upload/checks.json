@@ -1,0 +1,22 @@
+{
+  "tests_passed": 10,
+  "test_command": "python -m unittest -v test_upload_fix",
+  "cases": [
+    "wav",
+    "m4a",
+    "video audio",
+    "unusual extension and shell metacharacters",
+    "no audio track rejection",
+    "invalid media rejection",
+    "20-second limit",
+    "original file preserved",
+    "patch repeat idempotency",
+    "unknown UI version rejected"
+  ],
+  "browser_test": "not performed",
+  "windows_gpu_test": "not performed",
+  "hashes": {
+    "radar_reference_upload.py": "156d1cee6e8b2d4c4ba053d550689981ecc07da9366dd04e1d3fd1117f1dbc09",
+    "patch_upload.py": "5d2a64aa199fe6e810516741760993f97d08fcd9015f964fd0ac70c4a608ef03"
+  }
+}
