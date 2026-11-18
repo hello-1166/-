@@ -1,0 +1,20 @@
+{
+  "date": "2026-11-18",
+  "version": "0.7.0",
+  "pytest": {
+    "passed": 222,
+    "failed": 0,
+    "warnings": 1,
+    "note": "Full suite used RAM-backed fixtures; default disk had insufficient free space."
+  },
+  "upstream_indextts_commit": "d9e41aac89fd00b3d71497fddb287b7f24613712",
+  "upstream_patch_ast_and_idempotency": "passed",
+  "audio_resample": "real stereo FLOAT 22050Hz to mono PCM16 24000Hz, duration 1 second: passed",
+  "real_p5_targeted_upgrade": "passed; .env/database/Dockerfile/Compose/ingestion config byte-identical",
+  "powershell_scripts_parse": 16,
+  "ruff": "passed",
+  "javascript_syntax": "passed",
+  "gpu_model_inference_tested": false,
+  "windows_hardware_tested": false,
+  "notes": "API tests use synthetic test speech. Final installed-model validation must run on the user Windows RTX4060."
+}
