@@ -1,0 +1,10 @@
+{
+  "sha256": "d64897609637d50f30ecb72e30999e57300bb42f16f6400dd6de6ee7b3da326d",
+  "bytes": 943960,
+  "retained_files": 300,
+  "source_commit": "d9e41aac89fd00b3d71497fddb287b7f24613712",
+  "source_hashes": "passed",
+  "python_syntax": "passed",
+  "zip_integrity": "passed",
+  "windows_gpu_execution": "not run"
+}
